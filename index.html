@@ -1,40 +1,119 @@
-<!doctype html>
+<!-- https://hiukim.github.io/mind-ar-js-doc/tools/compile/ -->
+
 <html>
 
 <head>
-  <title>My first ar experience </title>
-	<script src="https://aframe.io/releases/1.3.0/aframe.min.js">
-	</script>
-	<script src="https://raw.githack.com/AR-js-org/AR.js/3.4.5/aframe/build/aframe-ar.js">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script type="text/javascript" nonce="fb7f3ca70a7b4a0fa3708777fcf" src="//local.adguard.org?ts=1741791842211&amp;type=content-script&amp;dmn=zipper.janeway.platform.replit.com&amp;url=https%3A%2F%2Fzipper.janeway.platform.replit.com%2Frepls%2F3f6d0c4f-c905-4ac9-9fcd-bb40edeb6914%2Ffiles%2Ffile%3Fpath%3Dindex.html&amp;app=com.apple.Safari&amp;css=3&amp;js=1&amp;rel=1&amp;rji=1&amp;sbe=1&amp;stealth=1&amp;st-ua=TW96aWxsYS81LjAgKE1hY2ludG9zaDsgSW50ZWwgTWFjIE9TIFggMTBfMTVfNykgQXBwbGVXZWJLaXQvNjA1LjEuMTUgKEtIVE1MLCBsaWtlIEdlY2tvKSBWZXJzaW9uLzE4LjMgU2FmYXJpLzYwNS4xLjE1&amp;st-ch-brands=&amp;st-ch-mobile=&amp;st-ch-platform=&amp;st-wrtc&amp;st-push&amp;st-loc&amp;st-java&amp;st-ref=aHR0cHM6Ly96aXBwZXIuamFuZXdheS5wbGF0Zm9ybS5yZXBsaXQuY29tLw==&amp;st-dnt&amp;st-1pcttl=4320"></script>
+<script type="text/javascript" nonce="fb7f3ca70a7b4a0fa3708777fcf" src="//local.adguard.org?ts=1741791842211&amp;name=AdGuard%20Extra&amp;type=user-script"></script><script src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.1.4/dist/mindar-image.prod.js"></script>
+  <script src="https://aframe.io/releases/1.3.0/aframe.min.js">
+  </script>
+  <script src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.1.4/dist/mindar-image-aframe.prod.js"></script>
+  <script defer>
+    // https://github.com/nikolaiwarner/aframe-chromakey-material
+    AFRAME.registerShader('chromakey', {
+      schema: {
+        src: {type: 'map'},
+        color: {default: {x: 0.0, y: 1.0, z: 0.0}, type: 'vec3', is: 'uniform'},
+        chroma: {type: 'bool', is: 'uniform'},
+        transparent: {default: true, is: 'uniform'}
+      },
 
-	</script>
+      init: function (data) {
+        const videoEl = data.src;
+        document.addEventListener('click', () => {
+          videoEl.play();
+
+          //this.el.children[0].setAttribute('visible', false)
+          //console.log(this.el.children)
+        });
+
+        var videoTexture = new THREE.VideoTexture(data.src)
+        videoTexture.minFilter = THREE.LinearFilter
+        this.material = new THREE.ShaderMaterial({
+          uniforms: {
+            chroma: {
+              type: 'b',
+              value: data.chroma
+            },
+            color: {
+              type: 'c',
+              value: data.color
+            },
+            myTexture: {
+              type: 't',
+              value: videoTexture
+            }
+          },
+          vertexShader:
+            `
+            varying vec2 vUv;
+            
+            void main(void)
+            {
+              vUv = uv;
+              vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
+              gl_Position = projectionMatrix * mvPosition;
+            }
+          `
+          ,
+          fragmentShader:
+            `
+              uniform sampler2D myTexture;
+              uniform vec3 color;
+              uniform bool chroma;
+              varying vec2 vUv;
+              
+              void main(void)
+              {
+                vec3 tColor = texture2D( myTexture, vUv ).rgb;
+                float a;
+                if(chroma == true){
+                   a = (length(tColor - color) - 0.5) * 7.0;
+                }
+                else {
+                  a = 1.0;
+                }
+                
+                gl_FragColor = vec4(tColor, a);
+              }
+            `
+        })
+      },
+
+      update: function (data) {
+        this.material.color = data.color
+        this.material.src = data.src
+        this.material.transparent = data.transparent
+      },
+
+    })
+
+  </script>
 </head>
 
+<body>
+  <a-scene id="arscene" mindar-image="imageTargetSrc: ./assets/images/targets.mind; maxTrack:2"
+    vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
+    <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-<body style="margin : 0px; overflow: hidden;">
+    <a-assets>
+      <video id="vid" src="assets/images/Test_1.mp4" autoplay="false" loop="true" preload="auto" controls="false"
+        muted="true" playsinline="" webkit-playsinline=""></video>
+    </a-assets>
 
-	<a-scene 
-    embedded arjs="sourceType: webcam;"
-    vr-mode-ui="enabled: false" 
-    renderer="sortObjects: true; antialias: true; logarithmicDepthBuffer: true;"
-    arjs="trackingMethod: best;
-    detectionMode :'color_and_matrix' 
-    changeMatrixMode: 'modelViewMatrix'; "
-	  smooth="true" smoothCount="5" smoothTolerance=".05" smoothThreshold="5" 
-    sourceWidth= "800" sourceHeight= "600"
-    displayWidth= "1280" displayHeight="720" >
+    <a-entity mindar-image-target="targetIndex: 0"  material="shader: chromakey; src: #vid; chroma: true; color: 0. 0. 1."
+    geometry="primitive: plane; width:  1; height:  1" position="0  0  0" rotation="270  0  0" side="double">
+  </a-entity>
 
-		<a-marker preset="kanji" size= "0.08">
 
-			<a-cylinder position='0 0 0' rotation='0 0 0' scale='1 1 1' color='#07c876' material='opacity: 1;'></a-box>
-                <a-cylinder position='0 0 0' rotation='0 0 45' scale='1 1 5' color='#ff4444' material='opacity: 1;'></a-box>
+  <!--
+    <a-box mindar-image-target="targetIndex: 0" depth="0.1" color="#FF884B" opacity="0.5" position="0 0 0"></a-box>
 
-		</a-marker>
-
-		<a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
-
-	</a-scene>
+    <a-box mindar-image-target="targetIndex: 1" depth=".1" color="#9D0191" opacity="0.5" position="0 0 0"></a-box>
+-->
+  </a-scene>
 
 </body>
 
-</html>
+</html>s
