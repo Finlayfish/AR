@@ -114,7 +114,7 @@
         var videoEl = this.el.getAttribute('material').src;
         if (!videoEl) { return; }
         this.el.object3D.visible = true;
-        videoEl.play();
+        videoEl.loop();
       }
     });
   </script>
