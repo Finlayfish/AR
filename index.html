@@ -93,7 +93,7 @@
           var videoEl = this.el.getAttribute('material').src;
           if (!videoEl) { return; }
           this.el.object3D.visible = true;
-          videoEl.loop();
+          videoEl.play();
 
         });
         this.el.addEventListener('targetLost', event => {
