@@ -102,6 +102,7 @@
           if (!videoEl) { return; }
           this.el.object3D.visible = false;
           videoEl.pause();
+          videoEl.currentTime = 0;
         });
       },
       play: function () {
@@ -114,7 +115,7 @@
         var videoEl = this.el.getAttribute('material').src;
         if (!videoEl) { return; }
         this.el.object3D.visible = true;
-        videoEl.loop();
+        videoEl.play();
       }
     });
   </script>
