@@ -102,6 +102,7 @@
           if (!videoEl) { return; }
           this.el.object3D.visible = false;
           videoEl.pause();
+          videoEl.currentTime = 0;
          
         });
       },
